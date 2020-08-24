@@ -26,24 +26,43 @@ class TransactionsRepository {
 
   public getBalance(): Balance {
     // TODO
-    const Balance: Balance = this.transactions.reduce((acumulador, atual) => {
-      if (!acumulador[atual.type]) {
-        acumulador[atual.type] = 0;
-      }
-
-      acumulador[atual.type] += atual.value;
-      return acumulador;
-    }, {});
-
-    Balance.total = Object.values(Balance).reduce(
-      (acumulador, atual) => acumulador - atual,
+    const { income, outcome } = this.transactions.reduce(
+      (accumulator: Balance, transaction: Transaction) => {
+        switch (transaction.type) {
+          case 'income':
+            accumulator.income += transaction.value;
+            break;
+          case 'outcome':
+            accumulator.outcome += transaction.value;
+            break;
+          default:
+            break;
+        }
+        return accumulator;
+      },
+      {
+        income: 0,
+        outcome: 0,
+        total: 0,
+      },
     );
 
-    return Balance;
+    console.log(income, outcome);
+
+    return {
+      income,
+      outcome,
+      total: income - outcome,
+    };
   }
 
   public create({ title, value, type }: CreateTransaction): Transaction {
     // TODO
+    const balance = this.getBalance();
+
+    if (type == 'outcome' && balance.total < value) {
+      throw Error("You don't have enough value in your account");
+    }
     const transaction = new Transaction({ title, value, type });
 
     this.transactions.push(transaction);
